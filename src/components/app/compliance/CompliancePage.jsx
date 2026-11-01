@@ -17,13 +17,13 @@ import { buildChecklist, buildEvents, scoreOf } from "./checks";
 
 function RatesCard({ params }) {
   const rows = [
-    ["SNMG mensuel", `${amount(params.snmg, { decimals: 0 })} DA`, "Vérifié", "Décret 26-01, JO du 14/01/2026"],
-    ["CNAS part salarié", percent(params.cnasEmployee * 100), "Vérifié", "CLEISS, janvier 2024"],
-    ["CNAS part employeur", percent(params.cnasEmployer * 100), "Vérifié", "25 % (et non 26 %)"],
-    ["FNPOS (œuvres sociales)", percent(params.fnpos * 100), "Vérifié", "Payé par l'employeur"],
-    ["Exonération IRG", `≤ ${amount(params.irgExemptUpTo, { decimals: 0 })} DA`, "Vérifié", "Base imposable mensuelle"],
-    ["Abattement IRG", `${percent(params.abattement.rate * 100, 0)} (${amount(params.abattement.min, { decimals: 0 })} à ${amount(params.abattement.max, { decimals: 0 })} DA)`, "Vérifié", "Barème loi de finances 2022"],
-    ["Lissage 30 001 – 35 000 DA", "137/51 − 27 925/8", "À confirmer", "Source unique"],
+    ["SNMG mensuel", `${amount(params.snmg, { decimals: 0 })} DA`, "Vérifié", "Décret présidentiel 26-01 du 7 janvier 2026, JO n°1 du 8/01/2026"],
+    ["CNAS part salarié", percent(params.cnasEmployee * 100), "Vérifié", "Loi n°83-14 du 2 juillet 1983 (presse algérienne)"],
+    ["CNAS part employeur", percent(params.cnasEmployer * 100), "Vérifié", "Loi n°83-14 du 2 juillet 1983 (25 %, et non 26 %)"],
+    ["FNPOS (œuvres sociales)", percent(params.fnpos * 100), "Vérifié", "Loi n°83-14 du 2 juillet 1983 — payé par l'employeur"],
+    ["Exonération IRG", `≤ ${amount(params.irgExemptUpTo, { decimals: 0 })} DA`, "Vérifié", "Art. 104 CIDTA, modifié art. 31 loi de finances 2022"],
+    ["Abattement IRG", `${percent(params.abattement.rate * 100, 0)} (${amount(params.abattement.min, { decimals: 0 })} à ${amount(params.abattement.max, { decimals: 0 })} DA)`, "Vérifié", "Art. 31 loi de finances 2022"],
+    ["Lissage 30 001 – 35 000 DA", "137/51 − 27 925/8", "À confirmer", "Formule reprise de la presse spécialisée, non lue directement au Journal officiel"],
     ["Arrondi imposable à la dizaine", params.irgRoundTo10 ? "Activé" : "Désactivé", "À confirmer", "Pratique logiciel"],
   ];
   return (

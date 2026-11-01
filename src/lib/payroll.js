@@ -20,6 +20,9 @@ export const defaultParams = {
   abattement: { rate: 0.4, min: 1000, max: 1500 },
   irgExemptUpTo: 30000,
   irgSmoothingUpTo: 35000,
+  // Majorations heures sup. : +50 % normal, +75 % nuit, +100 % jour de repos/férié. Schéma le plus
+  // répandu dans les guides RH consultés pour l'Algérie, mais aucun article de la loi 90-11 (ou de
+  // l'ordonnance 97-03) n'a pu être lu directement pour ces pourcentages. [à confirmer]
   overtime: { standard: 0.5, night: 0.75, rest: 1 },
 };
 

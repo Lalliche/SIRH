@@ -210,8 +210,10 @@ export function diffLines(curLines, prevLines = [], employeesById = {}, period) 
 // ---------- pre-flight rule engine ----------
 export const VARIANCE_THRESHOLD = 15;
 // Heures supplémentaires : plafond légal de 20 % de la durée normale (8 h sur une base de 40 h/semaine,
-// soit ~34,67 h sur le mois à 173,33 h). Loi 90-11 ; confirmé par un support de cours en droit du travail,
-// pas par le texte du Journal officiel lui-même [à confirmer].
+// soit ~34,67 h sur le mois à 173,33 h). Base légale : ordonnance n°97-03 du 11 janvier 1997 fixant la
+// durée légale du travail (qui a abrogé les articles 22 à 26 de la loi 90-11 sur ce point — ne pas citer
+// la loi 90-11 pour cette règle). Pourcentage confirmé par une source universitaire algérienne, mais pas
+// par la lecture directe du Journal officiel [à confirmer].
 export const OVERTIME_CAP_RATIO = 0.2;
 
 export const PREFLIGHT_RULES = {
@@ -403,6 +405,59 @@ export function ytdFor(employeeId, period, runs) {
   }
   for (const k of Object.keys(acc)) acc[k] = k === "count" ? acc[k] : round2(acc[k]);
   return acc;
+}
+
+// ---------- severance (indemnité de licenciement) ----------
+// Loi n°90-11 du 21 avril 1990, article 72 : 1 mois de salaire par année de travail, plafonné à 15 mois,
+// calculé sur la moyenne mensuelle la plus favorable des 3 dernières années. Ne s'applique pas en cas de
+// faute grave (art. 73 : aucune indemnité) ni, en principe, de démission ou de fin de CDD — motifs non
+// éligibles ci-dessous. Source : texte consolidé de la loi 90-11 (OMPI/WIPO Lex) ; confirmé par une
+// seconde source indépendante, mais la base légale n'a pas été lue directement au Journal officiel.
+export const SEVERANCE_MONTHS_CAP = 15;
+export const SEVERANCE_ELIGIBLE_REASONS = ["Licenciement", "Rupture conventionnelle"];
+export const SEVERANCE_NOT_ELIGIBLE = {
+  "Démission": "Le salarié démissionnaire n'a pas droit à l'indemnité de licenciement (art. 72).",
+  "Abandon de poste": "Assimilé à une faute grave : aucune indemnité de licenciement due (art. 73).",
+  "Fin de période d'essai": "La rupture pendant la période d'essai n'ouvre droit à aucune indemnité.",
+  "Fin de CDD": "Le CDD suit son propre régime de fin de contrat, distinct de l'indemnité de licenciement.",
+  "Retraite": "Le départ à la retraite relève d'un régime distinct (CNR), non de l'indemnité de licenciement. [à confirmer]",
+};
+
+/**
+ * Indemnité de licenciement (solde de tout compte, art. 72 loi 90-11) — prototype.
+ * yearsOfService : années complètes depuis hireDate. monthlyAverage : moyenne mensuelle la plus
+ * favorable des 3 dernières années — ici calculée sur l'historique de paie disponible (potentiellement
+ * moins de 3 ans dans ce prototype), avec repli explicite sur le salaire de base actuel si l'historique
+ * est insuffisant, pour rester honnête sur la limite des données plutôt que de deviner.
+ */
+export function severanceIndemnity({ employee, runs, exitReason, exitDate }) {
+  const eligible = SEVERANCE_ELIGIBLE_REASONS.includes(exitReason);
+  const blockedReason = SEVERANCE_NOT_ELIGIBLE[exitReason];
+  const years = Math.floor(monthsBetween(employee.hireDate, exitDate ?? employee.exitDate) / 12);
+
+  const history = payslipsOf(employee.id, runs).map((x) => x.line.net);
+  const basedOnHistory = history.length > 0;
+  const monthlyAverage = basedOnHistory ? round2(sum(history, (v) => v) / history.length) : employee.baseSalary;
+
+  const monthsOwed = Math.min(years, SEVERANCE_MONTHS_CAP);
+  const amount = eligible ? round2(monthsOwed * monthlyAverage) : 0;
+
+  return {
+    eligible,
+    blockedReason,
+    years,
+    monthsOwed,
+    monthlyAverage,
+    basedOnHistory, // false => repli sur le salaire de base, historique de paie insuffisant
+    amount,
+  };
+}
+
+function monthsBetween(from, to) {
+  if (!from || !to) return 0;
+  const [y1, m1] = from.split("-").map(Number);
+  const [y2, m2] = to.split("-").map(Number);
+  return Math.max(0, (y2 - y1) * 12 + (m2 - m1));
 }
 
 // ---------- declarations summary ----------

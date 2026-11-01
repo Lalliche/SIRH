@@ -17,16 +17,23 @@ export const PAY_IMPACT = {
 
 // Editable defaults (settings.leavePolicies overrides them). Rates marked "à confirmer" in the UI.
 export const DEFAULT_POLICIES = {
+  // Congé annuel : 2,5 j/mois, plafond 30 j/an. Loi n°90-11 du 21 avril 1990, article 41.
   accrual: { perMonth: 2.5, cap: 30, carryOver: 10, refStart: "06-01" },
   types: {
+    // Loi n°90-11 du 21 avril 1990, article 41 : 30 jours calendaires par an.
     annual: { enabled: true, quota: 30, coveredBy: "employer", proof: "never", approval: "Manager puis RH" },
     sick: { enabled: true, quota: null, coveredBy: "cnas", proof: "over1", approval: "RH" },
     // Loi n°25-08 du 19 juillet 2025 a porté le congé de maternité de 98 à 150 jours, payé à 100 % par la CNAS
     // (prolongation possible en cas de complications médicales documentées). [à confirmer : durée exacte de la prolongation]
     maternity: { enabled: true, quota: 150, coveredBy: "cnas", proof: "always", approval: "RH" },
     unpaid: { enabled: true, quota: null, coveredBy: "none", proof: "never", approval: "Manager puis RH" },
+    // Loi n°90-11 du 21 avril 1990, article 54 : congé pour événement familial (mariage, décès...).
+    // [à confirmer : 3 jours ouvrables ou 3 jours payés — divergence possible entre versions FR/AR du texte]
     exceptional: { enabled: true, quota: 3, coveredBy: "employer", proof: "always", approval: "Manager puis RH" },
     recovery: { enabled: true, quota: null, coveredBy: "employer", proof: "never", approval: "Manager" },
+    // Congé pour pèlerinage (Hajj) : 30 jours — figure la plus répandue trouvée, mais non retrouvée dans le
+    // texte de la loi 90-11 ni dans le statut général de la fonction publique. Convention d'usage, pas une
+    // disposition légale vérifiée. [à confirmer : base légale, caractère payé, une seule fois dans la carrière]
     pilgrimage: { enabled: true, quota: 30, coveredBy: "employer", proof: "always", approval: "RH" },
   },
 };

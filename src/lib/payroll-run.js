@@ -209,6 +209,10 @@ export function diffLines(curLines, prevLines = [], employeesById = {}, period) 
 
 // ---------- pre-flight rule engine ----------
 export const VARIANCE_THRESHOLD = 15;
+// Heures supplémentaires : plafond légal de 20 % de la durée normale (8 h sur une base de 40 h/semaine,
+// soit ~34,67 h sur le mois à 173,33 h). Loi 90-11 ; confirmé par un support de cours en droit du travail,
+// pas par le texte du Journal officiel lui-même [à confirmer].
+export const OVERTIME_CAP_RATIO = 0.2;
 
 export const PREFLIGHT_RULES = {
   missing_cnas: { label: "N° CNAS manquant", severity: "blocker", help: "Sans N° CNAS, la déclaration des cotisations est rejetée." },
@@ -224,6 +228,7 @@ export const PREFLIGHT_RULES = {
   sick_long: { label: "Arrêt maladie prolongé", severity: "warning", help: "Indemnités journalières CNAS et maintien de salaire à traiter. [à confirmer]" },
   loan_cap: { label: "Retenue prêt / avance élevée", severity: "warning", help: "La retenue dépasse le tiers du net avant retenues. [à confirmer : fraction saisissable]" },
   duplicate_rib: { label: "RIB en double", severity: "blocker", help: "Deux salariés partagent le même compte : risque d'erreur de virement." },
+  overtime_cap: { label: "Heures supplémentaires au-delà du plafond légal", severity: "warning", help: `Le plafond légal est de ${Math.round(OVERTIME_CAP_RATIO * 100)} % de la durée normale, soit environ ${Math.round(defaultParams.hoursPerMonth * OVERTIME_CAP_RATIO)} h sur le mois. [à confirmer]` },
 };
 export const PREFLIGHT_ORDER = Object.keys(PREFLIGHT_RULES);
 
@@ -278,6 +283,16 @@ export function runPreflight({ period, employees, lines, prevLines = [], leaveRe
     if (sickDays >= 10) add("sick_long", e, `Arrêt maladie de ${sickDays} jours ouvrés`, "Indemnités CNAS et maintien de salaire à traiter manuellement.", { href: `/app/leave`, label: "Voir le congé" });
     const preLoanNet = line.gross - line.cnasEmployee - line.irg;
     if (line.loanDeduction > 0 && line.loanDeduction > preLoanNet / 3) add("loan_cap", e, "Retenue prêt / avance élevée", `${fmt(line.loanDeduction)} DA pour un net avant retenue de ${fmt(preLoanNet)} DA.`, { href: "/app/loans", label: "Voir le prêt" });
+    const overtimeCapHours = params.hoursPerMonth * OVERTIME_CAP_RATIO;
+    if ((line.overtimeHours || 0) > overtimeCapHours) {
+      add(
+        "overtime_cap",
+        e,
+        `${fmt(line.overtimeHours)} h supplémentaires ce mois`,
+        `Au-delà du plafond légal d'environ ${Math.round(overtimeCapHours)} h (${Math.round(OVERTIME_CAP_RATIO * 100)} % de la durée normale).`,
+        fixTo(e, "time", "Vérifier le pointage"),
+      );
+    }
   }
   const byRule = {};
   for (const rule of PREFLIGHT_ORDER) byRule[rule] = issues.filter((i) => i.rule === rule);

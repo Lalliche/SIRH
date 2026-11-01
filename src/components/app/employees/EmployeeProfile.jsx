@@ -7,7 +7,8 @@ import AccessGate from "@/components/app/_kit/AccessGate";
 import ProgressRing from "@/components/app/_kit/ProgressRing";
 import { TODAY } from "@/lib/clock";
 import { db, useCollection } from "@/lib/db";
-import { fullName } from "@/lib/format";
+import { fullName, money } from "@/lib/format";
+import { severanceIndemnity } from "@/lib/payroll-run";
 import AttestationModal from "./AttestationModal";
 import { EXIT_REASONS, EMP_STATUS, canEdit, canOpenProfile, canSeeSalary, completeness, SENSITIVE_ROLES } from "./helpers";
 import { ContractBadge } from "./parts";
@@ -217,10 +218,12 @@ function ExitModal({ open, onClose, emp, actor }) {
   const [exitDate, setExitDate] = useState(TODAY);
   const [reason, setReason] = useState("");
   const [touched, setTouched] = useState(false);
+  const runs = useCollection("payrollRuns");
   const errors = {
     exitDate: !exitDate ? "Date obligatoire" : exitDate < emp.hireDate ? "Antérieure à la date d'embauche" : null,
     reason: !reason ? "Choisissez un motif" : null,
   };
+  const severance = reason && !errors.exitDate ? severanceIndemnity({ employee: emp, runs, exitReason: reason, exitDate }) : null;
   const submit = () => {
     setTouched(true);
     if (errors.exitDate || errors.reason) return;
@@ -247,6 +250,20 @@ function ExitModal({ open, onClose, emp, actor }) {
       <div className="flex flex-col gap-[1em]">
         <TextInput label="Date de sortie" type="date" required value={exitDate} onChange={setExitDate} onBlur={() => setTouched(true)} error={touched ? errors.exitDate : undefined} />
         <SelectInput label="Motif" required value={reason} onChange={setReason} onBlur={() => setTouched(true)} placeholder="Sélectionner un motif" options={EXIT_REASONS} error={touched ? errors.reason : undefined} />
+        {severance && (
+          <div className="rounded-md border border-border-subtle bg-surface-subtle p-[0.9em] text-sm">
+            {severance.eligible ? (
+              <>
+                <p className="font-medium text-fg">Indemnité de licenciement estimée : {money(severance.amount)}</p>
+                <p className="mt-[0.3em] text-xs text-fg-muted">
+                  {severance.monthsOwed} mois × {money(severance.monthlyAverage)} (moyenne {severance.basedOnHistory ? "des bulletins disponibles" : "sur le salaire de base — historique de paie insuffisant"}), plafonné à 15 mois. Art. 72, loi 90-11. [à confirmer]
+                </p>
+              </>
+            ) : (
+              <p className="text-fg-muted">{severance.blockedReason}</p>
+            )}
+          </div>
+        )}
         <p className="text-sm text-fg-muted">Pensez à préparer le solde de tout compte, le certificat de travail et la déclaration de sortie CNAS.</p>
       </div>
     </Modal>

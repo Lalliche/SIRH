@@ -21,7 +21,9 @@ export const DEFAULT_POLICIES = {
   types: {
     annual: { enabled: true, quota: 30, coveredBy: "employer", proof: "never", approval: "Manager puis RH" },
     sick: { enabled: true, quota: null, coveredBy: "cnas", proof: "over1", approval: "RH" },
-    maternity: { enabled: true, quota: 98, coveredBy: "cnas", proof: "always", approval: "RH" },
+    // Loi n°25-08 du 19 juillet 2025 a porté le congé de maternité de 98 à 150 jours, payé à 100 % par la CNAS
+    // (prolongation possible en cas de complications médicales documentées). [à confirmer : durée exacte de la prolongation]
+    maternity: { enabled: true, quota: 150, coveredBy: "cnas", proof: "always", approval: "RH" },
     unpaid: { enabled: true, quota: null, coveredBy: "none", proof: "never", approval: "Manager puis RH" },
     exceptional: { enabled: true, quota: 3, coveredBy: "employer", proof: "always", approval: "Manager puis RH" },
     recovery: { enabled: true, quota: null, coveredBy: "employer", proof: "never", approval: "Manager" },
